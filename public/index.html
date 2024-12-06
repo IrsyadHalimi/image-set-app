@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="container mt-5">
-    <h1 class="text-center">Image Set App</h1>
+    <h3 class="text-center">Image Downloader</h1>
     <form action="/download" method="POST" class="downloadForm">
       <div class="mb-3">
         <label for="imageUrl" class="form-label">Input image URL</label>
@@ -16,6 +16,90 @@
       </div>
       <button class="btn btn-primary w-100">Download</button>
     </form>
+  </div>
+  <div class="container mt-5">
+    <h3>Compress image from URL</h3>
+    <form id="urlForm">
+      <input type="url" id="imageUrlCompress" placeholder="Put Image URL here" required>
+      <select id="quality">
+        <option>-- Select Compression Type --</option>
+        <option value="less">Less Compressing</option>
+        <option value="medium">Medium Compressing</option>
+        <option value="extreme">Extra Compressing</option>
+      </select>
+      <button type="submit">Compress & Download</button>
+    </form>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" id="imageUpload" name="image" required>
+      <select id="uploadQuality">
+        <option>-- Select Compression Type --</option>
+        <option value="less">Less Compressing</option>
+        <option value="medium">Medium Compressing</option>
+        <option value="extreme">Extra Compressing</option>
+      </select>
+      <button type="submit">Upload and Compress</button>
+    </form>
+    <h3>Compress Result:</h3>
+    <img id="compressedImage" style="max-width: 100%; display: none;" alt="Compressed Image">
+    <script>
+      document.getElementById('urlForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const imageUrlCompress = document.getElementById('imageUrlCompress').value;
+        let quality = document.getElementById('quality').value;
+        if (quality === 'less') {
+          quality = 90;
+        } else if (quality === 'medium') {
+          quality = 50;
+        } else if (quality === 'extreme') {
+          quality = 20;
+        } else {
+          quality = 80;
+        }
+
+        const response = await fetch('/download-compress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ imageUrlCompress, quality })
+        });
+
+        if (response.ok) {
+          const imageBlob = await response.blob();
+          const imageObjectURL = URL.createObjectURL(imageBlob);
+          document.getElementById('compressedImage').src = imageObjectURL;
+          document.getElementById('compressedImage').style.display = 'block';
+        } else {
+          alert('Failed compressing image!');
+        }
+      });
+
+      document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        const fileInput = document.getElementById('imageUpload');
+        const quality = document.getElementById('uploadQuality').value || 80;
+
+        formData.append('image', fileInput.files[0]);
+        formData.append('quality', quality);
+
+        const response = await fetch('/upload-compress', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const imageBlob = await response.blob();
+          const imageObjectURL = URL.createObjectURL(imageBlob);
+          document.getElementById('compressedImage').src = imageObjectURL;
+          document.getElementById('compressedImage').style.display = 'block';
+        } else {
+          alert('Failed compressing image!');
+        }
+      });
+    </script>
   </div>
 </body>
 </html>
